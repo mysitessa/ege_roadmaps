@@ -1,24 +1,11 @@
 ---
-import { EditorRoadmap } from '../../components/EditorRoadmap/EditorRoadmap';
-import { FAQs } from '../../components/FAQs/FAQs';
-import RelatedRoadmaps from '../../components/RelatedRoadmaps.astro';
-import RoadmapHeader from '../../components/RoadmapHeader.astro';
-import { ShareIcons } from '../../components/ShareIcons/ShareIcons';
-import { TopicDetail } from '../../components/TopicDetail/TopicDetail';
-import { UserProgressModal } from '../../components/UserProgress/UserProgressModal';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { isNewRoadmap } from '../../queries/official-roadmap';
 import {
-  generateArticleSchema,
-  generateFAQSchema,
-} from '../../lib/jsonld-schema';
-import { getOpenGraphImageUrl } from '../../lib/open-graph';
-import { RoadmapTitleQuestion } from '../../components/RoadmapTitleQuestion';
-import ResourceProgressStats from '../../components/ResourceProgressStats.astro';
-import { CheckSubscriptionVerification } from '../../components/Billing/CheckSubscriptionVerification';
-import { officialRoadmapDetails } from '../../queries/official-roadmap';
-import { DateTime } from 'luxon';
-import { listOfficialProjects } from '../../queries/official-project';
+  generateRoadmap,
+  type RoadmapTier,
+  roadmapTiers,
+} from '../../lib/roadmaps/generator';
+import { subjects } from '../../lib/subjects';
 
 export const prerender = false;
 
@@ -27,153 +14,313 @@ interface Params extends Record<string, string | undefined> {
 }
 
 const { roadmapId } = Astro.params as Params;
-const roadmapData = await officialRoadmapDetails(roadmapId);
-if (!roadmapData) {
-  Astro.response.status = 404;
-  Astro.response.statusText = 'Not found';
-  return Astro.rewrite('/404');
-}
+const subject = subjects.find((item) => item.id === roadmapId);
+const tierParam = Astro.url.searchParams.get('tier') as RoadmapTier | null;
+const tier = tierParam && tierParam in roadmapTiers ? tierParam : 'base';
+const roadmap = generateRoadmap({ subjectId: roadmapId, tier });
 
-let jsonLdSchema = [];
+const title = subject?.title || `Предмет: ${roadmapId}`;
+const description =
+  subject?.description || 'Дорожная карта подготовки по выбранному предмету.';
 
-const datePublished = DateTime.fromJSDate(
-  new Date(roadmapData?.createdAt),
-).toFormat('yyyy-MM-dd');
-const dateModified = DateTime.fromJSDate(
-  new Date(roadmapData?.updatedAt),
-).toFormat('yyyy-MM-dd');
+const allTopics =
+  roadmap?.phases?.flatMap((phase) =>
+    phase.topics.map((topic) => ({
+      ...topic,
+      phaseId: phase.id,
+      phaseTitle: phase.title,
+    })),
+  ) || [];
 
-const baseUrl = import.meta.env.DEV
-  ? `http://localhost:8080`
-  : `https://roadmap.sh`;
-
-jsonLdSchema.push(
-  generateArticleSchema({
-    url: `https://roadmap.sh/${roadmapId}`,
-    headline: roadmapData?.seo?.title || roadmapData?.title?.page,
-    description: roadmapData?.description,
-    datePublished,
-    dateModified,
-    imageUrl: `${baseUrl}/roadmaps/${roadmapId}.png`,
-  }),
-);
-
-const ogImageUrl =
-  roadmapData?.openGraph?.image ||
-  getOpenGraphImageUrl({
-    group: 'roadmap',
-    resourceId: roadmapId,
-  });
-
-const question = roadmapData?.questions?.find(
-  (question) => question.type === 'main',
-);
-const faqs =
-  roadmapData?.questions?.filter((question) => question.type === 'faq') || [];
-if (faqs.length) {
-  jsonLdSchema.push(generateFAQSchema(faqs));
-}
-
-const projects = await listOfficialProjects({ roadmapId });
-const courses = roadmapData.courses || [];
-
-const isNew = isNewRoadmap(roadmapData.createdAt);
+const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
 ---
 
 <BaseLayout
   permalink={`/${roadmapId}`}
-  title={roadmapData?.seo?.title || roadmapData?.title.page}
-  briefTitle={roadmapData.title.card}
-  ogImageUrl={ogImageUrl}
-  description={roadmapData.seo.description}
-  keywords={roadmapData.seo.keywords}
+  title={title}
+  description={description}
   noIndex={false}
-  jsonLd={jsonLdSchema}
-  resourceId={roadmapId}
-  resourceType='roadmap'
 >
-  <link
-    rel='preload'
-    href='/fonts/balsamiq.woff2'
-    as='font'
-    type='font/woff2'
-    crossorigin
-    slot='after-header'
-  />
+  <div>
+    <div class='roadmap-fullscreen py-8'>
+      <h1 class='text-2xl font-bold sm:text-4xl'>{title}</h1>
+      <p class='mt-2 text-gray-600'>{description}</p>
 
-  <TopicDetail
-    resourceId={roadmapId}
-    resourceType='roadmap'
-    renderer='editor'
-    client:idle
-    canSubmitContribution={true}
-  />
-
-  <div class='bg-gray-50'>
-    <RoadmapHeader
-      title={roadmapData.title.page}
-      description={roadmapData.description}
-      partner={roadmapData.partner}
-      roadmapId={roadmapId}
-      isForkable={true}
-      isNew={isNew}
-      projectCount={projects.length}
-      coursesCount={courses.length}
-      hasAIChat={true}
-    />
-
-    <div class='container mt-2.5'>
-      <div class='rounded-md border bg-white'>
-        <ResourceProgressStats resourceId={roadmapId} resourceType='roadmap' />
+      <div class='mt-6 flex flex-wrap gap-2'>
         {
-          question?.title && (
-            <RoadmapTitleQuestion
-              client:load
-              roadmapId={roadmapId}
-              question={question?.title}
-              answer={question?.description}
-            />
-          )
+          (Object.keys(roadmapTiers) as RoadmapTier[]).map((tierKey) => {
+            const config = roadmapTiers[tierKey];
+            const isActive = tierKey === tier;
+            return (
+              <a
+                class:list={[
+                  'rounded-full border px-4 py-1 text-sm',
+                  isActive
+                    ? 'border-slate-900 bg-slate-900 text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400',
+                ]}
+                href={`/${roadmapId}?tier=${tierKey}`}
+              >
+                {config.label} · {config.goalScore}+
+              </a>
+            );
+          })
         }
       </div>
-    </div>
 
-    <div class='relative container max-w-[1000px]!'>
-      <ShareIcons
-        resourceId={roadmapId}
-        resourceType='roadmap'
-        description={roadmapData.description}
-        pageUrl={`https://roadmap.sh/${roadmapId}`}
-        client:load
-      />
+      <div class='mt-6 rounded-lg border bg-white p-4'>
+        <div class='flex items-center justify-between gap-3'>
+          <div>
+            <p class='text-xs uppercase tracking-wide text-slate-500'>
+              Прогресс
+            </p>
+            <p class='text-lg font-semibold text-slate-900'>
+              Изучено тем: <span data-progress-count>0</span> из{' '}
+              <span data-progress-total>{allTopics.length}</span>
+            </p>
+          </div>
+          <div class='text-right text-2xl font-bold text-slate-900'>
+            <span data-progress-percent>0%</span>
+          </div>
+        </div>
+        <div class='progress-track mt-3'>
+          <div class='progress-fill' data-progress-bar></div>
+        </div>
+      </div>
 
-      <EditorRoadmap
-        resourceId={roadmapId}
-        resourceType='roadmap'
-        dimensions={roadmapData.dimensions!}
-        client:load
-      />
-    </div>
-
-    <UserProgressModal
-      resourceId={roadmapId}
-      resourceType='roadmap'
-      renderer='editor'
-      client:only='react'
-    />
-
-    {
-      roadmapId === 'docker' && (
-        <p class='mb-8 px-5 text-center text-xs text-gray-400 sm:mb-12'>
-          Roadmap owner Insight Partners is an investor in Docker.
+      <div class='mt-6 rounded-lg border bg-white p-4'>
+        <h2 class='text-lg font-semibold'>
+          Скелет roadmap: {roadmapTiers[tier].label}
+        </h2>
+        <p class='text-sm text-gray-500'>
+          Ниже пока заглушки. Мы заполним их позже контентом.
         </p>
-      )
-    }
 
-    <FAQs faqs={faqs} client:load />
-    <RelatedRoadmaps relatedRoadmaps={roadmapData?.relatedRoadmaps || []} />
+      <div class='roadmap-layout mt-6'>
+          <div class='roadmap-overlay' data-roadmap-overlay></div>
+          <aside class='roadmap-sidebar' data-roadmap-panel>
+            <div class='roadmap-sidebar-header'>
+              <p class='text-xs uppercase tracking-wide text-slate-500'>
+                Детали темы
+              </p>
+              <button class='panel-close' data-panel-close type='button'>
+                Закрыть
+              </button>
+            </div>
+            <h3 class='text-lg font-semibold text-slate-900' data-panel-title>
+              Выберите тему
+            </h3>
+            <p class='mt-2 text-sm text-slate-600' data-panel-description>
+              Нажмите на любой блок в дорожной карте, чтобы открыть описание.
+            </p>
+
+            <div class='mt-4'>
+              <p class='text-xs uppercase tracking-wide text-slate-500'>
+                Полезные источники
+              </p>
+              <ul class='panel-links' data-panel-links></ul>
+            </div>
+
+            <button class='panel-action' data-panel-toggle type='button'>
+              Изучено
+            </button>
+          </aside>
+
+          <div class='roadmap-surface'>
+          <div class='roadmap-map'>
+          {
+            roadmap?.phases?.map((phase) => {
+              const leftTopics = phase.topics.filter((_, i) => i % 2 === 0);
+              const rightTopics = phase.topics.filter((_, i) => i % 2 !== 0);
+              return (
+                <div class='roadmap-row'>
+                  <div class='roadmap-side roadmap-side-left'>
+                    {leftTopics.map((topic) => (
+                      <button
+                        class='roadmap-node roadmap-node-left'
+                        data-topic-id={topic.id}
+                        type='button'
+                      >
+                        <div class='roadmap-node-card'>
+                          <span
+                            class='progress-check'
+                            aria-hidden='true'
+                          ></span>
+                          <span class='text-sm'>{topic.title}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div class='roadmap-core'>
+                    <div class='roadmap-core-card'>
+                      <h3 class='text-base font-semibold'>{phase.title}</h3>
+                      <p class='mt-1 text-xs text-slate-400'>
+                        {phase.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class='roadmap-side roadmap-side-right'>
+                    {rightTopics.map((topic) => (
+                      <button
+                        class='roadmap-node roadmap-node-right'
+                        data-topic-id={topic.id}
+                        type='button'
+                      >
+                        <div class='roadmap-node-card'>
+                          <span
+                            class='progress-check'
+                            aria-hidden='true'
+                          ></span>
+                          <span class='text-sm'>{topic.title}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          }
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <CheckSubscriptionVerification client:load />
-  <div slot='changelog-banner'></div>
 </BaseLayout>
+
+<script
+  is:inline
+  define:vars={{
+    storageKey,
+    topics: allTopics,
+  }}
+>
+  const panel = document.querySelector('[data-roadmap-panel]');
+  const overlay = document.querySelector('[data-roadmap-overlay]');
+  const panelTitle = panel?.querySelector('[data-panel-title]');
+  const panelDescription = panel?.querySelector('[data-panel-description]');
+  const panelLinks = panel?.querySelector('[data-panel-links]');
+  const panelToggle = panel?.querySelector('[data-panel-toggle]');
+  const panelClose = panel?.querySelector('[data-panel-close]');
+
+  const progressCount = document.querySelector('[data-progress-count]');
+  const progressTotal = document.querySelector('[data-progress-total]');
+  const progressPercent = document.querySelector('[data-progress-percent]');
+  const progressBar = document.querySelector('[data-progress-bar]');
+
+  const topicMap = new Map();
+  for (const topic of topics) {
+    topicMap.set(topic.id, topic);
+  }
+
+  function getStoredProgress() {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveStoredProgress(progressSet) {
+    localStorage.setItem(storageKey, JSON.stringify(Array.from(progressSet)));
+  }
+
+  let activeTopicId = null;
+  let completed = getStoredProgress();
+
+  function setPanelOpen(isOpen) {
+    if (!panel || !overlay) return;
+    panel.classList.toggle('panel-open', isOpen);
+    overlay.classList.toggle('overlay-show', isOpen);
+  }
+
+  function updateProgressUI() {
+    const total = topics.length;
+    const done = completed.size;
+    const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+    if (progressCount) progressCount.textContent = String(done);
+    if (progressTotal) progressTotal.textContent = String(total);
+    if (progressPercent) progressPercent.textContent = `${percent}%`;
+    if (progressBar) progressBar.style.width = `${percent}%`;
+
+    document.querySelectorAll('[data-topic-id]').forEach((node) => {
+      const topicId = node.getAttribute('data-topic-id');
+      if (!topicId) return;
+      node.classList.toggle('topic-complete', completed.has(topicId));
+    });
+  }
+
+  function renderLinks(links = []) {
+    if (!panelLinks) return;
+    panelLinks.innerHTML = '';
+    if (!links.length) {
+      const li = document.createElement('li');
+      li.textContent = 'Ссылки будут добавлены позже.';
+      panelLinks.appendChild(li);
+      return;
+    }
+    for (const link of links) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = link.url;
+      a.target = '_blank';
+      a.rel = 'noreferrer';
+      a.textContent = link.title;
+      li.appendChild(a);
+      panelLinks.appendChild(li);
+    }
+  }
+
+  function openPanel(topicId) {
+    const topic = topicMap.get(topicId);
+    if (!topic || !panel) return;
+
+    activeTopicId = topicId;
+    setPanelOpen(true);
+    if (panelTitle) panelTitle.textContent = topic.title;
+    if (panelDescription) panelDescription.textContent = topic.description;
+    renderLinks(topic.links);
+
+    if (panelToggle) {
+      const isDone = completed.has(topicId);
+      panelToggle.textContent = isDone ? 'Отменить изучение' : 'Изучено';
+    }
+  }
+
+  function closePanel() {
+    setPanelOpen(false);
+    activeTopicId = null;
+  }
+
+  document.querySelectorAll('[data-topic-id]').forEach((node) => {
+    node.addEventListener('click', () => {
+      const topicId = node.getAttribute('data-topic-id');
+      if (!topicId) return;
+      if (activeTopicId === topicId) {
+        closePanel();
+        return;
+      }
+      openPanel(topicId);
+    });
+  });
+
+  panelToggle?.addEventListener('click', () => {
+    if (!activeTopicId) return;
+    if (completed.has(activeTopicId)) {
+      completed.delete(activeTopicId);
+    } else {
+      completed.add(activeTopicId);
+    }
+    saveStoredProgress(completed);
+    updateProgressUI();
+    openPanel(activeTopicId);
+  });
+
+  panelClose?.addEventListener('click', closePanel);
+  overlay?.addEventListener('click', closePanel);
+  updateProgressUI();
+</script>

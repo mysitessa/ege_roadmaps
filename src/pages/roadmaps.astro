@@ -1,16 +1,23 @@
 ---
-import { RoadmapsPage } from '../components/Roadmaps/RoadmapsPage';
-import { RoadmapsPageHeader } from '../components/Roadmaps/RoadmapsPageHeader';
+import FeaturedItems from '../components/FeaturedItems/FeaturedItems.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ChangelogBanner from '../components/ChangelogBanner.astro';
+import { subjects } from '../lib/subjects';
+
+const featuredSubjects = subjects.map((subject) => ({
+  text: subject.title,
+  url: `/${subject.id}`,
+}));
 ---
 
 <BaseLayout
-  title='Developer Roadmaps'
-  description={'Step by step guides and paths to learn different tools or technologies'}
+  title='Предметы ЕГЭ'
+  description={'Все дорожные карты подготовки к ЕГЭ.'}
   permalink={'/roadmaps'}
 >
-  <RoadmapsPageHeader client:load />
-  <RoadmapsPage client:load />
-  <ChangelogBanner slot='changelog-banner' />
+  <div class='bg-transparent'>
+    <FeaturedItems
+      heading='Предметы ЕГЭ'
+      featuredItems={featuredSubjects}
+    />
+  </div>
 </BaseLayout>

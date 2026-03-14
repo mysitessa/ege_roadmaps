@@ -1,12 +1,9 @@
 ---
-import AstroIcon from '../AstroIcon.astro';
-import { MarkFavorite } from './MarkFavorite';
 export interface FeaturedItemType {
   isUpcoming?: boolean;
   isNew?: boolean;
   url: string;
   text: string;
-  allowBookmark?: boolean;
 }
 
 export interface Props extends FeaturedItemType {}
@@ -16,38 +13,25 @@ const {
   isNew = false,
   text,
   url,
-  allowBookmark = true,
 } = Astro.props;
 ---
 
 <a
   class:list={[
-    'group border border-slate-800 bg-slate-900 p-2.5 sm:p-3.5 block no-underline rounded-lg relative text-slate-400 font-regular text-md hover:border-slate-600 hover:text-slate-100 overflow-hidden',
+    'group border-2 border-black bg-white p-2.5 sm:p-3.5 block no-underline rounded-lg relative text-slate-700 font-medium text-md hover:border-blue-600 hover:text-slate-900 overflow-hidden shadow-sm hover:shadow-md transition-shadow',
     {
       'opacity-50': isUpcoming,
     },
   ]}
   href={url}
 >
-  <span class='relative z-20 text-slate-400'>
+  <span class='relative z-20'>
     {text}
   </span>
 
   {
-    allowBookmark && (
-      <MarkFavorite
-        resourceId={url.split('/').pop()!}
-        resourceType={
-          url.includes('best-practices') ? 'best-practice' : 'roadmap'
-        }
-        client:only='react'
-      />
-    )
-  }
-
-  {
     isNew && (
-      <span class='absolute bottom-1.5 right-2 flex items-center rounded-br rounded-tl text-xs font-medium text-purple-300'>
+      <span class='absolute bottom-1.5 right-2 flex items-center rounded-br rounded-tl text-xs font-medium text-blue-600'>
         <span class='mr-1.5 flex h-2 w-2'>
           <span class='absolute inline-flex h-2 w-2 animate-ping rounded-full bg-purple-400 opacity-75' />
           <span class='relative inline-flex h-2 w-2 rounded-full bg-purple-500' />
