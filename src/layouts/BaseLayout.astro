@@ -5,6 +5,15 @@ import Footer from '../components/Footer.astro';
 import Navigation from '../components/Navigation/Navigation.astro';
 import { siteConfig } from '../lib/config';
 
+// Базовый layout для всех страниц.
+// Тут лежат:
+// - подключение глобальных стилей
+// - общий header/footer
+// - meta-теги (SEO/OG/Twitter/JSON-LD)
+//
+// Примечание: часть значений сейчас “унаследована” от шаблона roadmap.sh
+// (например, домен, ogImageUrl по умолчанию, commitUrl). Если будешь
+// деплоить под своим доменом — обнови эти места.
 export interface Props {
   title: string;
   ogImageUrl?: string;
@@ -39,6 +48,8 @@ const {
 } = Astro.props;
 
 // Remove trailing slashes to consider the page as canonical
+// Важно: домен сейчас захардкожен под roadmap.sh (унаследовано от шаблона).
+// Если деплоишь не туда — замени на свой домен (и в ogImageUrl при желании).
 const currentPageAbsoluteUrl = `https://roadmap.sh${permalink}`;
 const canonicalUrl = givenCanonical || currentPageAbsoluteUrl;
 const commitUrl = `https://github.com/kamranahmedse/developer-roadmap/commit/${
@@ -46,6 +57,7 @@ const commitUrl = `https://github.com/kamranahmedse/developer-roadmap/commit/${
 }`;
 
 // e.g. frontend:react or best-practices:frontend-performance
+// Задел на будущее: можно использовать как идентификатор страницы в аналитике.
 const gaPageIdentifier = Astro.url.pathname
   .replace(/^\//, '')
   .replace(/\/$/, '')

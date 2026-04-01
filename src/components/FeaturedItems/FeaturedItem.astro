@@ -1,4 +1,6 @@
 ---
+// Одна карточка “featured item” (предмет).
+// Флаги `isNew`/`isUpcoming` используются для бейджей.
 export interface FeaturedItemType {
   isUpcoming?: boolean;
   isNew?: boolean;
@@ -52,6 +54,10 @@ const {
       </span>
     )
   }
+  <!--
+    Задел на будущее: можно визуально показывать прогресс прямо на карточке,
+    меняя ширину этого слоя (например, через inline-style или data-атрибуты).
+  -->
   <span
     data-progress
     class='absolute bottom-0 left-0 top-0 z-10 w-0 bg-[#172a3a] transition-[width] duration-300'

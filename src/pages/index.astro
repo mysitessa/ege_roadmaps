@@ -1,9 +1,11 @@
 ---
+// Главная страница: hero + список предметов.
 import FeaturedItems from '../components/FeaturedItems/FeaturedItems.astro';
 import HeroSection from '../components/HeroSection/HeroSection.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { subjects } from '../lib/subjects';
 
+// Превращаем справочник предметов в список карточек (текст + URL).
 const featuredSubjects = subjects.map((subject) => ({
   text: subject.title,
   url: `/${subject.id}`,

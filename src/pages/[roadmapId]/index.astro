@@ -1,4 +1,11 @@
 ---
+// Динамическая страница роадмапа: `/<roadmapId>?tier=base|standard|hard`.
+// Здесь мы:
+// - читаем `roadmapId` из параметров маршрута
+// - читаем `tier` из query string
+// - генерируем структуру роадмапа (phases/topics) через generateRoadmap()
+// - рендерим “таймлайн” + боковую панель с деталями темы
+// - храним прогресс “изучено” в localStorage (только на клиенте)
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import {
   generateRoadmap,
@@ -23,6 +30,7 @@ const title = subject?.title || `Предмет: ${roadmapId}`;
 const description =
   subject?.description || 'Дорожная карта подготовки по выбранному предмету.';
 
+// Для боковой панели удобнее работать с плоским списком тем.
 const allTopics =
   roadmap?.phases?.flatMap((phase) =>
     phase.topics.map((topic) => ({
@@ -32,6 +40,8 @@ const allTopics =
     })),
   ) || [];
 
+// Прогресс хранится отдельно для каждого предмета и уровня сложности.
+// Значение: список topic.id, отмеченных как “Изучено”.
 const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
 ---
 
@@ -90,10 +100,10 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
 
       <div class='mt-6 rounded-lg border bg-white p-4'>
         <h2 class='text-lg font-semibold'>
-          Скелет roadmap: {roadmapTiers[tier].label}
+          Дорожная карта: {roadmapTiers[tier].label}
         </h2>
         <p class='text-sm text-gray-500'>
-          Ниже пока заглушки. Мы заполним их позже контентом.
+          Выберите тему, чтобы увидеть детали и отметить прогресс.
         </p>
 
       <div class='roadmap-layout mt-6'>
@@ -130,6 +140,10 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
           <div class='roadmap-map'>
           {
             roadmap?.phases?.map((phase) => {
+              // UI раскладывает темы в две колонки “шахматкой”:
+              // - чётные индексы слева
+              // - нечётные справа
+              // Это визуально помогает “читать” дорожную карту как таймлайн.
               const leftTopics = phase.topics.filter((_, i) => i % 2 === 0);
               const rightTopics = phase.topics.filter((_, i) => i % 2 !== 0);
               return (
@@ -197,6 +211,11 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     topics: allTopics,
   }}
 >
+  // Клиентский код отвечает за:
+  // - открытие/закрытие боковой панели
+  // - рендер ссылок по выбранной теме
+  // - сохранение “изучено” в localStorage
+  // - пересчет прогресса и подсветку выполненных тем
   const panel = document.querySelector('[data-roadmap-panel]');
   const overlay = document.querySelector('[data-roadmap-overlay]');
   const panelTitle = panel?.querySelector('[data-panel-title]');
@@ -215,6 +234,8 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     topicMap.set(topic.id, topic);
   }
 
+  // Считываем прогресс из localStorage.
+  // Формат хранения: JSON-массив строк (topic.id).
   function getStoredProgress() {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -224,6 +245,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     }
   }
 
+  // Сохраняем Set обратно как массив (JSON не умеет сериализовать Set).
   function saveStoredProgress(progressSet) {
     localStorage.setItem(storageKey, JSON.stringify(Array.from(progressSet)));
   }
@@ -254,6 +276,8 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     });
   }
 
+  // Перерисовываем список ссылок в панели.
+  // Если ссылок нет — показываем нейтральный плейсхолдер.
   function renderLinks(links = []) {
     if (!panelLinks) return;
     panelLinks.innerHTML = '';
@@ -275,6 +299,10 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     }
   }
 
+  // Открываем панель для темы:
+  // - выставляем заголовок/описание
+  // - показываем список ссылок
+  // - обновляем текст кнопки “Изучено”
   function openPanel(topicId) {
     const topic = topicMap.get(topicId);
     if (!topic || !panel) return;
@@ -296,6 +324,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     activeTopicId = null;
   }
 
+  // Клик по любому блоку темы в таймлайне открывает панель.
   document.querySelectorAll('[data-topic-id]').forEach((node) => {
     node.addEventListener('click', () => {
       const topicId = node.getAttribute('data-topic-id');
@@ -308,6 +337,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     });
   });
 
+  // Переключатель “Изучено”: меняем Set, сохраняем и обновляем UI.
   panelToggle?.addEventListener('click', () => {
     if (!activeTopicId) return;
     if (completed.has(activeTopicId)) {

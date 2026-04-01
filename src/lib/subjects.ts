@@ -1,3 +1,8 @@
+// Единый список предметов, который используется:
+// - для карточек на главной/странице /roadmaps
+// - для человекочитаемых заголовков на странице `/<roadmapId>`
+//
+// Важно: `id` становится частью URL (`/<id>`) и должен быть стабильным.
 export type SubjectItem = {
   id: string;
   title: string;
@@ -7,13 +12,5 @@ export type SubjectItem = {
 export const subjects: SubjectItem[] = [
   { id: 'russian', title: 'Русский язык' },
   { id: 'math', title: 'Математика' },
-  { id: 'physics', title: 'Физика' },
   { id: 'informatics', title: 'Информатика' },
-  { id: 'chemistry', title: 'Химия' },
-  { id: 'biology', title: 'Биология' },
-  { id: 'history', title: 'История' },
-  { id: 'social-studies', title: 'Обществознание' },
-  { id: 'literature', title: 'Литература' },
-  { id: 'english', title: 'Английский язык' },
-  { id: 'geography', title: 'География' },
 ];

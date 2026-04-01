@@ -1,6 +1,14 @@
 ---
 import { parse } from 'node-html-parser';
 
+// Встраивание SVG-иконок из `src/icons/*.svg`.
+// Важно: используем `import.meta.glob(..., { query: '?raw', eager: true })`,
+// чтобы получить исходный текст SVG на этапе сборки и прокинуть атрибуты наружу.
+//
+// Зачем так сложно, а не `<img src=...>`:
+// - SVG можно стилизовать через CSS (fill/stroke/class)
+// - атрибуты можно передавать как props (например, class/width/height)
+// - “сырой” импорт через `?raw` делает иконки частью сборки (без лишних запросов)
 export interface Props {
   icon: string;
   class?: string;
@@ -18,6 +26,8 @@ async function getSVG(name: string) {
     throw new Error(`${filepath} not found`);
   }
 
+  // Парсим SVG как HTML, чтобы вытащить `<svg>` и его атрибуты/innerHTML.
+  // Так можно “смёржить” базовые атрибуты из файла и то, что передали наружу.
   const root = parse((files[filepath] as any).default as string);
 
   const svg = root.querySelector('svg');

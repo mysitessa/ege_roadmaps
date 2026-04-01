@@ -5,6 +5,12 @@ import {
   roadmapTiers,
 } from '../lib/roadmaps/generator';
 
+// API-роут: `/<roadmapId>.json?tier=...`
+//
+// Зачем нужен:
+// - отладка (посмотреть, какой JSON генерируется)
+// - внешние интеграции (например, мобильное приложение или бот)
+// - потенциальная будущая админка/редактор (если появится)
 export const prerender = false;
 
 export const GET: APIRoute = async function ({ params, request }) {
@@ -17,6 +23,7 @@ export const GET: APIRoute = async function ({ params, request }) {
   }
 
   const url = new URL(request.url);
+  // tier берём из query-параметра и валидируем по roadmapTiers.
   const tierParam = url.searchParams.get('tier') as RoadmapTier | null;
   const tier = tierParam && tierParam in roadmapTiers ? tierParam : 'base';
 
