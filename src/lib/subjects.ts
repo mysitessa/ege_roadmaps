@@ -8,5 +8,5 @@ export type SubjectItem = {
 export const subjects: SubjectItem[] = [
   { id: 'russian', title: 'Русский язык' },
   { id: 'math', title: 'Математика' },
-  { id: 'informatics', title: 'Информатика' },
+  { id: 'informatics', title: 'Информатика' }
 ];
