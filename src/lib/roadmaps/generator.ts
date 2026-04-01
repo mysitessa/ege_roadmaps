@@ -4,21 +4,7 @@ import { mathRoadmap } from './subjects/math';
 import { russianRoadmap } from './subjects/russian';
 import { informaticsRoadmap } from './subjects/informatics';
 
-// Генератор структуры “дорожной карты”.
-//
-// Задача файла:
-// - “склеить” справочник предметов (subjects) с контентом роадмапов
-// - отдать на выход единый JSON-объект, удобный для UI и внешнего API
-//
-// Как добавить новый предмет:
-// 1) Добавить `id` в `src/lib/subjects.ts` (это станет частью URL: `/<id>`)
-// 2) Создать файл в `src/lib/roadmaps/subjects/<id>.ts`
-// 3) Подключить его здесь (import + запись в `subjectRoadmaps`)
-//
-// Если предмет не подключён — UI всё равно будет работать: вернём “заглушку”
-// (структуру фаз и тем с примерными названиями).
-
-// Публичные типы: импортируются в страницах и API-роутах.
+// Генератор структуры дорожной карты
 export type { RoadmapPhase, RoadmapTier, RoadmapTopic } from './types';
 
 export type GeneratedRoadmap = {
@@ -50,9 +36,7 @@ const subjectRoadmaps: Partial<Record<string, Record<RoadmapTier, RoadmapPhase[]
     informatics: informaticsRoadmap,
   };
 
-// Заглушки нужны, чтобы:
-// - можно было добавить предмет в список subjects, но не заполнить контент сразу
-// - UI / API при этом не падали, а отображали “скелет”
+// Заглушки
 function buildPlaceholderTopics(phaseIndex: number): RoadmapTopic[] {
   return [
     {

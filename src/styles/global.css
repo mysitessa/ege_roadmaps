@@ -12,21 +12,6 @@
   --color-surface-alt: #f8fafc;
 }
 
-/* ==========================================================================
-   Глобальные стили проекта
-
-   - Tailwind utilities подключены выше.
-   - Ниже: базовые правки, контейнер и стили страницы роадмапа (таймлайн + панель).
-   ========================================================================== */
-
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
   *,
   ::after,
@@ -49,22 +34,6 @@ svg {
   user-select: none;
 }
 
-/* ==========================================================================
-   Roadmap timeline (EGE)
-
-   Эти классы используются на странице `src/pages/[roadmapId]/index.astro`.
-
-   Как это работает:
-   - `roadmap-map::before` рисует вертикальную линию таймлайна по центру
-   - каждая `roadmap-row` — одна фаза (этап)
-   - темы (topics) раскладываются в две колонки “шахматкой”
-   - боковая панель:
-     - открытие: класс `.panel-open` на `.roadmap-sidebar`
-     - затемнение: класс `.overlay-show` на `.roadmap-overlay`
-   - прогресс:
-     - JS добавляет `.topic-complete` на кнопки с `data-topic-id`
-     - CSS меняет чекбокс/подсветку
-   ========================================================================== */
 
 .roadmap-surface {
   background: transparent;
@@ -101,7 +70,6 @@ svg {
   box-shadow: 0 0 14px rgba(59, 130, 246, 0.25);
 }
 
-/* Сетка одной строки: [темы слева] [карточка фазы] [темы справа] */
 .roadmap-row {
   position: relative;
   display: grid;
@@ -111,7 +79,6 @@ svg {
   margin: 20px 0;
 }
 
-/* Левая/правая колонка тем (topic-кнопок) */
 .roadmap-side {
   display: grid;
   gap: 10px;
@@ -171,7 +138,6 @@ svg {
   border-color: #38bdf8;
 }
 
-/* Пунктирные “соединители” от темы к центральной линии */
 .roadmap-node-left::after,
 .roadmap-node-right::after {
   content: '';
@@ -190,7 +156,6 @@ svg {
   left: -28px;
 }
 
-/* Индикатор “изучено” (JS добавляет `.topic-complete` на node) */
 .progress-check {
   width: 18px;
   height: 18px;
@@ -218,7 +183,6 @@ svg {
   color: #0b0f14;
 }
 
-/* Боковая панель темы: по умолчанию скрыта, JS добавляет `.panel-open` */
 .roadmap-sidebar {
   position: fixed;
   left: 24px;
@@ -373,7 +337,6 @@ svg {
   }
 }
 
-/* Общий фон и базовые цвета сайта */
 body {
   font-family: var(--font-sans);
   color: var(--color-ink);

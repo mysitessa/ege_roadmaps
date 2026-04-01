@@ -3,16 +3,6 @@ import { defaultTopicDescription } from '../types';
 import type { RoadmapPhase, RoadmapTier, RoadmapTopic } from '../types';
 
 // Роадмап по математике (профиль).
-//
-// Структура:
-// - `base`     — порог и база (40+)
-// - `standard` — уверенный средний (60+)
-// - `hard`     — высокий результат (80+)
-//
-// В конце каждого tier добавлена фаза “Универсальные ресурсы”.
-// Это сознательный компромисс:
-// - ссылки “строго по теме” лежат в `mathTopicLinks`
-// - общие сайты/задачники — отдельным блоком, чтобы не дублировать их в каждой теме
 
 function normalizeTopicTitle(title: string): string {
   return title.trim().replace(/[.\s]+$/g, '');

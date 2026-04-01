@@ -30,7 +30,6 @@ const title = subject?.title || `Предмет: ${roadmapId}`;
 const description =
   subject?.description || 'Дорожная карта подготовки по выбранному предмету.';
 
-// Для боковой панели удобнее работать с плоским списком тем.
 const allTopics =
   roadmap?.phases?.flatMap((phase) =>
     phase.topics.map((topic) => ({
@@ -140,10 +139,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
           <div class='roadmap-map'>
           {
             roadmap?.phases?.map((phase) => {
-              // UI раскладывает темы в две колонки “шахматкой”:
-              // - чётные индексы слева
-              // - нечётные справа
-              // Это визуально помогает “читать” дорожную карту как таймлайн.
+              //четные индексы слева, а нечет справа
               const leftTopics = phase.topics.filter((_, i) => i % 2 === 0);
               const rightTopics = phase.topics.filter((_, i) => i % 2 !== 0);
               return (
@@ -211,11 +207,6 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     topics: allTopics,
   }}
 >
-  // Клиентский код отвечает за:
-  // - открытие/закрытие боковой панели
-  // - рендер ссылок по выбранной теме
-  // - сохранение “изучено” в localStorage
-  // - пересчет прогресса и подсветку выполненных тем
   const panel = document.querySelector('[data-roadmap-panel]');
   const overlay = document.querySelector('[data-roadmap-overlay]');
   const panelTitle = panel?.querySelector('[data-panel-title]');
@@ -235,7 +226,6 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
   }
 
   // Считываем прогресс из localStorage.
-  // Формат хранения: JSON-массив строк (topic.id).
   function getStoredProgress() {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -245,7 +235,6 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     }
   }
 
-  // Сохраняем Set обратно как массив (JSON не умеет сериализовать Set).
   function saveStoredProgress(progressSet) {
     localStorage.setItem(storageKey, JSON.stringify(Array.from(progressSet)));
   }
@@ -300,9 +289,9 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
   }
 
   // Открываем панель для темы:
-  // - выставляем заголовок/описание
-  // - показываем список ссылок
-  // - обновляем текст кнопки “Изучено”
+  // выставляем заголовок/описание
+  //показываем список ссылок
+  // обновляем текст кнопки “Изучено”
   function openPanel(topicId) {
     const topic = topicMap.get(topicId);
     if (!topic || !panel) return;

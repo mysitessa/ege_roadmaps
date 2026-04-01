@@ -4,13 +4,6 @@ import {
   type RoadmapTier,
   roadmapTiers,
 } from '../lib/roadmaps/generator';
-
-// API-роут: `/<roadmapId>.json?tier=...`
-//
-// Зачем нужен:
-// - отладка (посмотреть, какой JSON генерируется)
-// - внешние интеграции (например, мобильное приложение или бот)
-// - потенциальная будущая админка/редактор (если появится)
 export const prerender = false;
 
 export const GET: APIRoute = async function ({ params, request }) {
