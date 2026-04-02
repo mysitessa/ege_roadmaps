@@ -74,7 +74,6 @@ export function generateRoadmap(params: {
   const subject = subjects.find((item) => item.id === subjectId);
   if (!subject) return null;
 
-  // Если subjectId есть в subjects, но ещё нет контента — отдадим заглушки.
   const config = tierConfig[tier];
   const phases =
     subjectRoadmaps[subjectId]?.[tier] ?? buildPhases(config.phaseCount, config.label);

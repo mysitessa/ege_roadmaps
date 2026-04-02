@@ -1,11 +1,5 @@
 ---
-// Динамическая страница роадмапа: `/<roadmapId>?tier=base|standard|hard`.
-// Здесь мы:
-// - читаем `roadmapId` из параметров маршрута
-// - читаем `tier` из query string
-// - генерируем структуру роадмапа (phases/topics) через generateRoadmap()
-// - рендерим “таймлайн” + боковую панель с деталями темы
-// - храним прогресс “изучено” в localStorage (только на клиенте)
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import {
   generateRoadmap,
@@ -45,10 +39,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
 ---
 
 <BaseLayout
-  permalink={`/${roadmapId}`}
   title={title}
-  description={description}
-  noIndex={false}
 >
   <div>
     <div class='roadmap-fullscreen py-8'>
@@ -76,7 +67,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
           })
         }
       </div>
-
+      <!-- генерация прогресс бара -->
       <div class='mt-6 rounded-lg border bg-white p-4'>
         <div class='flex items-center justify-between gap-3'>
           <div>
@@ -142,6 +133,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
               //четные индексы слева, а нечет справа
               const leftTopics = phase.topics.filter((_, i) => i % 2 === 0);
               const rightTopics = phase.topics.filter((_, i) => i % 2 !== 0);
+              //отрисовка роадмапа
               return (
                 <div class='roadmap-row'>
                   <div class='roadmap-side roadmap-side-left'>
@@ -265,8 +257,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
     });
   }
 
-  // Перерисовываем список ссылок в панели.
-  // Если ссылок нет — показываем нейтральный плейсхолдер.
+  // Перерисовыв список ссылок в панели.
   function renderLinks(links = []) {
     if (!panelLinks) return;
     panelLinks.innerHTML = '';
@@ -325,8 +316,7 @@ const storageKey = `ege-roadmap:${roadmapId}:${tier}`;
       openPanel(topicId);
     });
   });
-
-  // Переключатель “Изучено”: меняем Set, сохраняем и обновляем UI.
+// нажатие на изучено
   panelToggle?.addEventListener('click', () => {
     if (!activeTopicId) return;
     if (completed.has(activeTopicId)) {
